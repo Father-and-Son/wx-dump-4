@@ -29,7 +29,7 @@ impl MsgQuery {
         }
 
         // 使用索引优化查询
-        let sql = if let Some(wxid) = wxid {
+        let sql = if wxid.is_some() {
             "SELECT StrTalker, COUNT(*) FROM MSG WHERE StrTalker = ? GROUP BY StrTalker"
         } else {
             "SELECT StrTalker, COUNT(*) FROM MSG GROUP BY StrTalker ORDER BY COUNT(*) DESC"

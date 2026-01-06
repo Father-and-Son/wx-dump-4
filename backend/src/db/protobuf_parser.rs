@@ -1,5 +1,4 @@
 use crate::utils::Result;
-use anyhow::Context;
 use std::collections::HashMap;
 
 /// Protobuf解析器
@@ -10,7 +9,7 @@ impl ProtobufParser {
     /// 解析BytesExtra字段（protobuf格式）
     /// 微信的BytesExtra通常包含文件路径、URL等信息
     pub fn parse_bytes_extra(bytes: &[u8]) -> Result<HashMap<String, String>> {
-        let mut result = HashMap::new();
+        let result = HashMap::new();
 
         if bytes.is_empty() {
             return Ok(result);
@@ -55,7 +54,7 @@ impl ProtobufParser {
             match wire_type {
                 0 => {
                     // Varint
-                    let (value, consumed) = Self::read_varint(&bytes[offset..])?;
+                    let (_value, consumed) = Self::read_varint(&bytes[offset..])?;
                     offset += consumed;
                     // 这里可以根据field_number存储值
                 }

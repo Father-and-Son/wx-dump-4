@@ -14,6 +14,7 @@ use windows::Win32::{
 #[derive(Debug, Clone)]
 pub struct ModuleInfo {
     pub base_address: usize,
+    #[allow(dead_code)]
     pub size: usize,
     pub file_name: String,
 }

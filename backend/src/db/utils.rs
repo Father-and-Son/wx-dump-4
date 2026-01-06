@@ -66,6 +66,7 @@ pub fn timestamp_to_string(timestamp: i64) -> String {
 }
 
 /// 字符串转时间戳
+#[allow(dead_code)]
 pub fn string_to_timestamp(time_str: &str) -> Option<i64> {
     if let Ok(dt) = DateTime::parse_from_str(time_str, "%Y-%m-%d %H:%M:%S") {
         Some(dt.timestamp())
@@ -94,6 +95,7 @@ pub struct Message {
 }
 
 impl Message {
+    #[allow(dead_code)]
     pub fn from_row(row: &rusqlite::Row) -> rusqlite::Result<Self> {
         let msg_type: i32 = row.get(3)?;
         let sub_type: i32 = row.get(4)?;

@@ -7,7 +7,6 @@ use crate::core::{
     version_detection::VersionOffsetDetector,
 };
 use crate::utils::Result;
-use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -29,7 +28,10 @@ pub struct WeChatInfo {
 
 pub fn get_wx_info(wx_offs: &HashMap<String, Vec<u32>>) -> Result<Vec<WeChatInfo>> {
     // 查找所有WeChat进程
-    let pids = ProcessManager::find_by_name("WeChat.exe")?;
+    let mut pids = ProcessManager::find_by_name("WeChat.exe")?;
+    if pids.is_empty() {
+        pids = ProcessManager::find_by_name("Weixin.exe")?;
+    }
 
     if pids.is_empty() {
         return Err(crate::utils::AppError::WeChatNotFound.into());
@@ -84,7 +86,7 @@ pub fn get_info_details(pid: u32, wx_offs: &HashMap<String, Vec<u32>>) -> Result
     };
 
     // 根据偏移量获取信息
-    let mut bias_list_opt: Option<&Vec<u32>> = version::get_version_offset(&version, wx_offs);
+    let bias_list_opt: Option<&Vec<u32>> = version::get_version_offset(&version, wx_offs);
     let mut detected_offs: Option<Vec<u32>> = None;
     
     // 如果配置中没有偏移量，尝试自动检测

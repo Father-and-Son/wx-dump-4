@@ -1,6 +1,5 @@
 use crate::core::{memory::MemoryManager, memory_map::MemoryMap, process::ProcessManager};
 use crate::utils::Result;
-use anyhow::Context;
 use std::collections::HashMap;
 
 /// 版本偏移量自动检测
@@ -42,7 +41,7 @@ impl VersionOffsetDetector {
     fn detect_name_offset(
         memory: &MemoryManager,
         base_address: usize,
-        addr_len: usize,
+        _addr_len: usize,
     ) -> Result<u32> {
         // 搜索特征码（这里需要根据实际情况调整）
         // 通常昵称在某个固定的相对位置
@@ -63,7 +62,7 @@ impl VersionOffsetDetector {
     fn detect_account_offset(
         memory: &MemoryManager,
         base_address: usize,
-        addr_len: usize,
+        _addr_len: usize,
     ) -> Result<u32> {
         // 类似昵称的检测方法
         let search_pattern = b"account";
@@ -79,9 +78,9 @@ impl VersionOffsetDetector {
 
     /// 检测手机号偏移量
     fn detect_mobile_offset(
-        memory: &MemoryManager,
-        base_address: usize,
-        addr_len: usize,
+        _memory: &MemoryManager,
+        _base_address: usize,
+        _addr_len: usize,
     ) -> Result<u32> {
         // 搜索手机号特征（通常是11位数字）
         // 这里使用简化的搜索方法
@@ -90,9 +89,9 @@ impl VersionOffsetDetector {
 
     /// 检测邮箱偏移量
     fn detect_mail_offset(
-        memory: &MemoryManager,
-        base_address: usize,
-        addr_len: usize,
+        _memory: &MemoryManager,
+        _base_address: usize,
+        _addr_len: usize,
     ) -> Result<u32> {
         // 搜索邮箱特征（包含@符号）
         Ok(0) // 暂时返回0
@@ -100,9 +99,9 @@ impl VersionOffsetDetector {
 
     /// 检测密钥偏移量
     fn detect_key_offset(
-        memory: &MemoryManager,
-        base_address: usize,
-        addr_len: usize,
+        _memory: &MemoryManager,
+        _base_address: usize,
+        _addr_len: usize,
     ) -> Result<u32> {
         // 密钥通常是64位十六进制字符串
         // 搜索特征码来定位
@@ -114,7 +113,7 @@ impl VersionOffsetDetector {
         pid: u32,
         version: &str,
         offsets: &[u32],
-        wx_offs: &HashMap<String, Vec<u32>>,
+        _wx_offs: &HashMap<String, Vec<u32>>,
     ) -> Result<bool> {
         if offsets.len() < 5 {
             return Ok(false);

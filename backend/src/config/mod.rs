@@ -49,7 +49,7 @@ pub fn save_wx_offs(offs: &HashMap<String, Vec<u32>>) -> Result<()> {
 
 fn get_config_path() -> Result<PathBuf> {
     // 优先使用项目目录下的配置文件
-    if let Ok(mut path) = std::env::current_dir() {
+    if let Ok(path) = std::env::current_dir() {
         let project_config = path.join("backend").join("config").join("wx_offs.json");
         if project_config.exists() {
             return Ok(project_config);

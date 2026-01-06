@@ -4,7 +4,6 @@ use std::path::Path;
 use windows::{
     core::PCWSTR,
     Win32::{
-        Foundation::HANDLE,
         System::{
             ProcessStatus::GetModuleFileNameExW,
             Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ},

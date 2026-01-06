@@ -22,6 +22,7 @@ pub fn validate_db_path(path: &str) -> Result<()> {
 }
 
 /// 验证密钥格式
+#[allow(dead_code)]
 pub fn validate_key(key: &str) -> Result<()> {
     if key.is_empty() {
         return Err(anyhow!("Key cannot be empty").into());

@@ -1,6 +1,6 @@
 use crate::utils::Result;
 use anyhow::Context;
-use rusqlite::{Connection, Row};
+use rusqlite::Connection;
 use std::path::Path;
 
 pub struct DatabasePool {
@@ -26,6 +26,7 @@ impl DatabasePool {
 
 pub struct DatabaseBase {
     pool: DatabasePool,
+    #[allow(dead_code)]
     existed_tables: Vec<String>,
 }
 
@@ -79,6 +80,7 @@ impl DatabaseBase {
     }
     
     /// 获取所有表名
+    #[allow(dead_code)]
     pub fn get_tables(&mut self) -> Result<Vec<String>> {
         let conn = self.get_connection()?;
         let mut stmt = conn.prepare(

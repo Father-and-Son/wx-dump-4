@@ -16,6 +16,7 @@ use windows::{
 
 /// 进程管理器
 pub struct ProcessManager {
+    #[allow(dead_code)]
     pub pid: u32,
     pub handle: HANDLE,
 }
@@ -55,7 +56,7 @@ impl ProcessManager {
                     let exe_name = CStr::from_ptr(pe32.szExeFile.as_ptr() as *const i8);
                     let exe_name_str = exe_name.to_string_lossy();
 
-                    if exe_name_str == name {
+                    if exe_name_str.to_lowercase() == name.to_lowercase() {
                         pids.push(pe32.th32ProcessID);
                     }
 

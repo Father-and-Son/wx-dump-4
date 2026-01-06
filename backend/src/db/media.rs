@@ -1,7 +1,6 @@
 use crate::db::dbbase::DatabaseBase;
 use crate::utils::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MediaInfo {
@@ -49,7 +48,7 @@ impl MediaHandler {
     /// 获取联系人媒体文件列表
     pub fn get_contact_media_list(
         &self,
-        wxid: &str,
+        _wxid: &str,
         media_type: Option<i32>,
         limit: Option<i64>,
     ) -> Result<Vec<MediaInfo>> {
@@ -93,18 +92,18 @@ impl MediaHandler {
     }
 
     /// 获取图片列表
-    pub fn get_image_list(&self, wxid: &str, limit: Option<i64>) -> Result<Vec<MediaInfo>> {
-        self.get_contact_media_list(wxid, Some(3), limit)
+    pub fn get_image_list(&self, _wxid: &str, limit: Option<i64>) -> Result<Vec<MediaInfo>> {
+        self.get_contact_media_list(_wxid, Some(3), limit)
     }
 
     /// 获取视频列表
-    pub fn get_video_list(&self, wxid: &str, limit: Option<i64>) -> Result<Vec<MediaInfo>> {
-        self.get_contact_media_list(wxid, Some(43), limit)
+    pub fn get_video_list(&self, _wxid: &str, limit: Option<i64>) -> Result<Vec<MediaInfo>> {
+        self.get_contact_media_list(_wxid, Some(43), limit)
     }
 
     /// 获取文件列表
-    pub fn get_file_list(&self, wxid: &str, limit: Option<i64>) -> Result<Vec<MediaInfo>> {
-        self.get_contact_media_list(wxid, Some(49), limit)
+    pub fn get_file_list(&self, _wxid: &str, limit: Option<i64>) -> Result<Vec<MediaInfo>> {
+        self.get_contact_media_list(_wxid, Some(49), limit)
     }
 }
 

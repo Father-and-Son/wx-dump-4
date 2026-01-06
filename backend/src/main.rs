@@ -1,15 +1,10 @@
 use axum::{
     extract::DefaultBodyLimit,
     http::Method,
-    routing::{get, post},
-    Router,
 };
 use std::net::SocketAddr;
 use tower::ServiceBuilder;
-use tower_http::{
-    cors::{Any, CorsLayer},
-    limit::RequestBodyLimitLayer,
-};
+use tower_http::cors::{Any, CorsLayer};
 use tracing::{info, Level};
 use tracing_subscriber;
 

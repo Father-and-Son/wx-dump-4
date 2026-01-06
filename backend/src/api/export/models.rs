@@ -16,6 +16,7 @@ pub struct ExportResponse {
     pub file_path: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExportDbRequest {
     pub db_path: String,

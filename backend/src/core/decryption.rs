@@ -131,6 +131,7 @@ pub fn decrypt_db(key: &str, db_path: &Path, out_path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn batch_decrypt(
     key: &str,
     db_paths: &[PathBuf],

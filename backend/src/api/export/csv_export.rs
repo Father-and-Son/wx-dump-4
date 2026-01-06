@@ -2,7 +2,6 @@ use crate::db::msg::MsgHandler;
 use crate::utils::Result;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
 
 pub struct CsvExporter;
 

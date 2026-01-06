@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 /// MSG数据库处理器
 pub struct MsgHandler {
+    #[allow(dead_code)]
     db_path: String,
     db: DatabaseBase,
     query: MsgQuery,

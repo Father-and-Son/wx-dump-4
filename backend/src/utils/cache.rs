@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use serde::{Serialize, Deserialize};
+use std::time::{Duration, SystemTime};
 
 /// 缓存项
 struct CacheItem<T> {
@@ -66,6 +65,7 @@ where
     }
 
     /// 清空缓存
+    #[allow(dead_code)]
     pub fn clear(&self) {
         if let Ok(mut data) = self.data.write() {
             data.clear();
@@ -73,6 +73,7 @@ where
     }
 
     /// 清理过期项
+    #[allow(dead_code)]
     pub fn cleanup(&self) {
         let now = SystemTime::now();
         if let Ok(mut data) = self.data.write() {

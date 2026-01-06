@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::fs;
 
 use crate::db::dbbase::DatabaseBase;
-use crate::utils::{AppError, Result, validation};
+use crate::utils::{Result, validation};
 use super::models::*;
 
 pub async fn analyze_storage(Json(req): Json<AnalyzeRequest>) -> Result<Json<AnalyzeResponse>> {

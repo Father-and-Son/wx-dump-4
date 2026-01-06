@@ -2,7 +2,7 @@ mod models;
 mod handlers;
 
 use axum::Router;
-use axum::routing::{get, post};
+use axum::routing::post;
 use handlers::*;
 
 pub fn router() -> Router {

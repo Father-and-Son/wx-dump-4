@@ -1,7 +1,6 @@
 use crate::db::dbbase::DatabaseBase;
 use crate::utils::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FavoriteItem {

@@ -8,6 +8,7 @@ use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, AppError>;
 
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error("Internal server error: {0}")]

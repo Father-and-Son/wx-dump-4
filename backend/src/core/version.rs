@@ -38,6 +38,7 @@ pub fn get_version_offset<'a>(
     wx_offs.get(version)
 }
 
+#[allow(dead_code)]
 pub fn parse_version(version_str: &str) -> Option<(u32, u32, u32, u32)> {
     let parts: Vec<u32> = version_str
         .split('.')

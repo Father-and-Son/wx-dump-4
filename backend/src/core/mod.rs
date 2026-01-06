@@ -7,8 +7,10 @@ pub mod version_detection;
 pub mod wx_info;
 pub mod file_version;
 
-pub use process::ProcessManager;
-pub use memory::MemoryManager;
+#[allow(unused_imports)]
+pub use decryption::decrypt_db;
+#[allow(unused_imports)]
 pub use wx_info::{WeChatInfo, get_wx_info};
-pub use file_version::{get_file_version_info, get_process_exe_path};
+#[allow(unused_imports)]
+pub use version_detection::VersionOffsetDetector;
 

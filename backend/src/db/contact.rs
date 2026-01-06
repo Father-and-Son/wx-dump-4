@@ -1,7 +1,5 @@
 use crate::db::dbbase::DatabaseBase;
 use crate::utils::Result;
-use anyhow::Context;
-use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -27,6 +25,7 @@ impl ContactHandler {
     }
 
     /// 获取联系人列表
+    #[allow(dead_code)]
     pub fn get_contacts(&self) -> Result<Vec<Contact>> {
         if !self.db.table_exists("Contact") {
             return Ok(Vec::new());
@@ -78,6 +77,7 @@ impl ContactHandler {
     }
 
     /// 搜索联系人
+    #[allow(dead_code)]
     pub fn search_contacts(&self, keyword: &str) -> Result<Vec<Contact>> {
         if !self.db.table_exists("Contact") {
             return Ok(Vec::new());
@@ -105,6 +105,7 @@ impl ContactHandler {
     }
 
     /// 获取联系人映射（用于消息显示）
+    #[allow(dead_code)]
     pub fn get_contact_map(&self) -> Result<HashMap<String, Contact>> {
         let contacts = self.get_contacts()?;
         let mut map = HashMap::new();
