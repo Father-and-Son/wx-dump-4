@@ -139,7 +139,7 @@ impl BytesExtraParser {
         let text = String::from_utf8_lossy(bytes_extra);
         
         // 尝试匹配URL
-        let url_pattern = r"https?://[^\s'\"<>]+";
+        let url_pattern = r#"https?://[^\s'\"<>]+"#;
         if let Ok(re) = Regex::new(url_pattern) {
             if let Some(captures) = re.find(&text) {
                 return Some(captures.as_str().to_string());

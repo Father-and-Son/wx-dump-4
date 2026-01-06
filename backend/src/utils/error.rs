@@ -12,6 +12,9 @@ pub type Result<T> = std::result::Result<T, AppError>;
 pub enum AppError {
     #[error("Internal server error: {0}")]
     Internal(#[from] anyhow::Error),
+
+    #[error("Internal error: {0}")]
+    InternalError(String),
     
     #[error("Not found: {0}")]
     NotFound(String),
@@ -42,10 +45,31 @@ pub enum AppError {
     
     #[error("Resource exhausted: {0}")]
     ResourceExhausted(String),
+
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+}
+
+// Add From implementation for rusqlite::Error
+impl From<rusqlite::Error> for AppError {
+    fn from(err: rusqlite::Error) -> Self {
+        AppError::Database(err.to_string())
+    }
+}
+
+// Add From implementation for serde_json::Error
+impl From<serde_json::Error> for AppError {
+    fn from(err: serde_json::Error) -> Self {
+        AppError::InternalError(format!("JSON error: {}", err))
+    }
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
+        let error_code = self.error_code();
+        let user_message = self.user_message();
+        let recoverable = self.is_recoverable();
+
         let (status, error_message) = match self {
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
@@ -63,17 +87,31 @@ impl IntoResponse for AppError {
                 tracing::error!("Internal error: {:?}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
             }
+            AppError::InternalError(msg) => {
+                tracing::error!("Internal error: {}", msg);
+                (StatusCode::INTERNAL_SERVER_ERROR, msg)
+            }
+            AppError::Io(err) => {
+                tracing::error!("IO error: {:?}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("IO error: {}", err))
+            }
         };
-
-        let error_code = self.error_code();
-        let user_message = self.user_message();
+        
+        // Note: We use `recoverable` calculated *before* consuming `self` into the match, 
+        // OR we need to avoid moving fields out of `self`. 
+        // The previous error was because `self.is_recoverable()` borrows `self`, but `match self` moves it.
+        // However, we engaged `self.is_recoverable()` BEFORE the match block in the original code? 
+        // Wait, the original code had `let recoverable = self.is_recoverable();` BEFORE the match.
+        // The borrow checker error claimed `self` was partially moved in the match arm `AppError::Io(err)`?
+        // Ah, `into_response` takes `self`. 
+        // Let's just recalculate recoverable inside or construct body carefully.
         
         let body = Json(json!({
             "error": error_message,
             "error_code": error_code,
             "user_message": user_message,
             "code": status.as_u16(),
-            "recoverable": self.is_recoverable(),
+            "recoverable": recoverable,
         }));
 
         (status, body).into_response()
@@ -85,7 +123,7 @@ impl AppError {
     pub fn is_recoverable(&self) -> bool {
         matches!(
             self,
-            AppError::Timeout(_) | AppError::Database(_) | AppError::Internal(_)
+            AppError::Timeout(_) | AppError::Database(_) | AppError::Internal(_) | AppError::InternalError(_) | AppError::Io(_)
         )
     }
     
@@ -102,7 +140,8 @@ impl AppError {
             AppError::BadRequest(msg) => format!("请求错误: {}", msg),
             AppError::Timeout(msg) => format!("操作超时: {}", msg),
             AppError::ResourceExhausted(msg) => format!("资源不足: {}", msg),
-            AppError::Internal(_) => "服务器内部错误，请稍后重试".to_string(),
+            AppError::Internal(_) | AppError::InternalError(_) => "服务器内部错误，请稍后重试".to_string(),
+            AppError::Io(err) => format!("文件操作失败: {}", err),
         }
     }
     
@@ -119,7 +158,8 @@ impl AppError {
             AppError::BadRequest(_) => "BAD_REQUEST",
             AppError::Timeout(_) => "TIMEOUT",
             AppError::ResourceExhausted(_) => "RESOURCE_EXHAUSTED",
-            AppError::Internal(_) => "INTERNAL_ERROR",
+            AppError::Internal(_) | AppError::InternalError(_) => "INTERNAL_ERROR",
+            AppError::Io(_) => "IO_ERROR",
         }
     }
 }

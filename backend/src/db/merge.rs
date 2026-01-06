@@ -5,6 +5,14 @@ use rusqlite::params;
 use std::collections::HashSet;
 use std::path::Path;
 
+pub fn merge_databases(
+    source_paths: &[String],
+    output_path: &str,
+    remove_duplicates: bool,
+) -> Result<usize> {
+    DbMerger::merge_databases(source_paths, output_path, remove_duplicates)
+}
+
 pub struct DbMerger;
 
 impl DbMerger {

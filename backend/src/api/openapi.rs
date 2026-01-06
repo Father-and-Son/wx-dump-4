@@ -26,7 +26,7 @@ pub struct ApiDoc;
 
 /// 创建Swagger UI路由
 pub fn swagger_router() -> Router {
-    SwaggerUi::new("/swagger-ui/{_:.*}")
+    SwaggerUi::new("/swagger-ui")
         .url("/api-doc/openapi.json", ApiDoc::openapi())
         .into()
 }

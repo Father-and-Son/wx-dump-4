@@ -6,14 +6,16 @@ use windows::{
     Win32::{
         Foundation::HANDLE,
         System::{
-            Diagnostics::ToolHelp::GetModuleFileNameExW,
+            ProcessStatus::GetModuleFileNameExW,
             Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ},
+        },
+        Storage::FileSystem::{
+            GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW, VS_FIXEDFILEINFO,
         },
     },
 };
 
 pub fn get_file_version_info(file_path: &Path) -> Result<String> {
-    use windows::Win32::System::SystemServices::*;
     
     let path_str: Vec<u16> = file_path
         .to_str()
@@ -33,13 +35,12 @@ pub fn get_file_version_info(file_path: &Path) -> Result<String> {
         }
 
         let mut buffer = vec![0u8; size as usize];
-        if !GetFileVersionInfoW(
+        if let Err(_) = GetFileVersionInfoW(
             PCWSTR::from_raw(path_str.as_ptr() as *const u16),
             0,
             size,
             buffer.as_mut_ptr() as *mut _,
         )
-        .as_bool()
         {
             return Err(anyhow::anyhow!("Failed to get version info").into());
         }

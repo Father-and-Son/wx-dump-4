@@ -56,19 +56,19 @@ impl MsgList {
 
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
 
-        if let Some(wxid) = wxid {
+        if let Some(wxid) = wxid.as_ref() {
             sql.push_str(" AND StrTalker = ?");
-            params.push(&wxid);
+            params.push(wxid);
         }
 
-        if let Some(start) = start_time {
+        if let Some(start) = start_time.as_ref() {
             sql.push_str(" AND CreateTime >= ?");
-            params.push(&start);
+            params.push(start);
         }
 
-        if let Some(end) = end_time {
+        if let Some(end) = end_time.as_ref() {
             sql.push_str(" AND CreateTime <= ?");
-            params.push(&end);
+            params.push(end);
         }
 
         sql.push_str(" ORDER BY CreateTime ASC LIMIT ? OFFSET ?");
@@ -242,19 +242,19 @@ impl MsgList {
         params.push(&search_pattern);
         params.push(&search_pattern);
 
-        if let Some(wxid) = wxid {
+        if let Some(wxid) = wxid.as_ref() {
             sql.push_str(" AND StrTalker = ?");
-            params.push(&wxid);
+            params.push(wxid);
         }
 
-        if let Some(start) = start_time {
+        if let Some(start) = start_time.as_ref() {
             sql.push_str(" AND CreateTime >= ?");
-            params.push(&start);
+            params.push(start);
         }
 
-        if let Some(end) = end_time {
+        if let Some(end) = end_time.as_ref() {
             sql.push_str(" AND CreateTime <= ?");
-            params.push(&end);
+            params.push(end);
         }
 
         sql.push_str(" ORDER BY CreateTime DESC LIMIT ?");

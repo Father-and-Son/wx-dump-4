@@ -50,8 +50,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(
             ServiceBuilder::new()
                 .layer(cors)
-                .layer(DefaultBodyLimit::disable())
-                .layer(RequestBodyLimitLayer::new(100 * 1024 * 1024)), // 100MB
+                .layer(DefaultBodyLimit::max(100 * 1024 * 1024)), // 100MB
         );
 
     // 启动服务器

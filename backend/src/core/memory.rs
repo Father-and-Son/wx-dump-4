@@ -4,12 +4,12 @@ use windows::{
     Win32::{
         Foundation::HANDLE,
         System::{
+            Diagnostics::Debug::ReadProcessMemory,
             Memory::{
                 MEMORY_BASIC_INFORMATION, MEM_COMMIT, PAGE_EXECUTE, PAGE_EXECUTE_READ,
                 PAGE_EXECUTE_READWRITE, PAGE_READONLY, PAGE_READWRITE, VirtualQueryEx,
             },
             ProcessStatus::GetMappedFileNameW,
-            Threading::ReadProcessMemory,
         },
     },
 };
@@ -28,38 +28,35 @@ impl MemoryManager {
         let mut bytes_read = 0;
 
         unsafe {
-            ReadProcessMemory(
+            if let Err(e) = ReadProcessMemory(
                 self.handle,
                 address as *const _,
                 buffer.as_mut_ptr() as *mut _,
                 size,
                 Some(&mut bytes_read),
-            )
-            .ok()
-            .with_context(|| format!("Failed to read memory at 0x{:x}", address))?;
+            ) {
+                return Err(anyhow::anyhow!("Failed to read memory at 0x{:x}: {}", address, e).into());
+            }
         }
 
         buffer.truncate(bytes_read);
         Ok(buffer)
     }
 
-    pub fn read_string(&self, address: usize, max_size: usize) -> Result<Option<String>> {
+    pub fn read_string(&self, address: usize, max_size: usize) -> Result<String> {
         let data = self.read_memory(address, max_size)?;
         
         // 查找null终止符
         if let Some(null_pos) = data.iter().position(|&b| b == 0) {
             let string_data = &data[..null_pos];
             String::from_utf8(string_data.to_vec())
-                .ok()
-                .map(|s| Some(s.trim().to_string()))
-                .unwrap_or(None)
+                .map(|s| s.trim().to_string())
+                .map_err(|e| anyhow::anyhow!("Invalid UTF-8 string: {}", e).into())
         } else {
             String::from_utf8(data)
-                .ok()
-                .map(|s| Some(s.trim().to_string()))
-                .unwrap_or(None)
+                .map(|s| s.trim().to_string())
+                .map_err(|e| anyhow::anyhow!("Invalid UTF-8 string: {}", e).into())
         }
-        .ok_or_else(|| anyhow::anyhow!("Invalid UTF-8 string").into())
     }
 
     pub fn read_pointer(&self, address: usize, addr_len: usize) -> Result<usize> {
@@ -87,7 +84,7 @@ impl MemoryManager {
         while address < end_address && results.len() < max_results {
             let mbi = self.query_memory(address)?;
             
-            if mbi.State != MEM_COMMIT {
+            if mbi.State.0 != MEM_COMMIT.0 {
                 address += mbi.RegionSize;
                 continue;
             }
@@ -100,7 +97,11 @@ impl MemoryManager {
                 PAGE_READONLY,
             ];
 
-            if !allowed_protections.contains(&mbi.Protect) {
+            // Use .0 to access inner u32 value of PAGE_PROTECTION_FLAGS
+            let protect_val = mbi.Protect.0;
+            let is_allowed = allowed_protections.iter().any(|p| p.0 == protect_val);
+
+            if !is_allowed {
                 address += mbi.RegionSize;
                 continue;
             }
@@ -128,14 +129,14 @@ impl MemoryManager {
         let mut mbi = MEMORY_BASIC_INFORMATION::default();
         
         unsafe {
-            VirtualQueryEx(
+            if VirtualQueryEx(
                 self.handle,
                 Some(address as *const _),
                 &mut mbi,
                 std::mem::size_of::<MEMORY_BASIC_INFORMATION>(),
-            )
-            .ok()
-            .with_context(|| format!("Failed to query memory at 0x{:x}", address))?;
+            ) == 0 {
+                return Err(anyhow::anyhow!("Failed to query memory at 0x{:x}", address).into());
+            }
         }
 
         Ok(mbi)
@@ -165,8 +166,8 @@ impl MemoryManager {
             maps.push(MemoryMap {
                 base_address: mbi.BaseAddress as usize,
                 region_size: mbi.RegionSize,
-                state: mbi.State,
-                protect: mbi.Protect,
+                state: mbi.State.0,
+                protect: mbi.Protect.0,
                 file_name,
             });
 

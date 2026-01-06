@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::config::{load_wx_offs, save_wx_offs};
-use crate::core::decryption::decrypt_db;
+use crate::core::decryption::decrypt_db as core_decrypt_db;
 use crate::core::wx_info::get_wx_info;
 use crate::db::merge::merge_databases;
 use crate::utils::{AppError, Result};
@@ -44,7 +44,7 @@ pub async fn decrypt_db(
         }));
     }
     
-    match decrypt_db(&req.key, &db_path, &out_path) {
+    match core_decrypt_db(&req.key, &db_path, &out_path) {
         Ok(_) => Ok(Json(DecryptDbResponse {
             success: true,
             message: "解密成功".to_string(),
@@ -81,13 +81,14 @@ pub async fn merge_db(
         }
     }
     
-    let db_paths: Vec<PathBuf> = req.db_paths.iter().map(PathBuf::from).collect();
+    let db_paths_str: Vec<String> = req.db_paths.clone();
     let out_path = PathBuf::from(&req.out_path);
+    let out_path_str = out_path.to_str().unwrap_or_default();
     
-    match merge_databases(&db_paths, &out_path) {
+    match merge_databases(&db_paths_str, out_path_str, false) {
         Ok(_) => Ok(Json(MergeDbResponse {
             success: true,
-            message: format!("成功合并 {} 个数据库", db_paths.len()),
+            message: format!("成功合并 {} 个数据库", db_paths_str.len()),
             out_path: Some(req.out_path),
         })),
         Err(e) => Ok(Json(MergeDbResponse {

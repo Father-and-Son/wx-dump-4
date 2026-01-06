@@ -35,10 +35,9 @@ impl MemoryMap {
         };
 
         unsafe {
-            if Module32FirstW(snapshot, &mut entry).as_bool() {
+            if Module32FirstW(snapshot, &mut entry).is_ok() {
                 loop {
                     let file_name = Self::wide_string_to_string(&entry.szModule)?;
-                    let file_path = Self::wide_string_to_string(&entry.szExePath)?;
 
                     modules.push(ModuleInfo {
                         base_address: entry.modBaseAddr as usize,
@@ -46,7 +45,7 @@ impl MemoryMap {
                         file_name,
                     });
 
-                    if !Module32NextW(snapshot, &mut entry).as_bool() {
+                    if Module32NextW(snapshot, &mut entry).is_err() {
                         break;
                     }
                 }
@@ -91,7 +90,7 @@ impl MemoryMap {
         };
 
         unsafe {
-            if Module32FirstW(snapshot, &mut entry).as_bool() {
+            if Module32FirstW(snapshot, &mut entry).is_ok() {
                 loop {
                     let file_name = Self::wide_string_to_string(&entry.szModule)?;
                     
@@ -100,7 +99,7 @@ impl MemoryMap {
                         return Ok(Some(file_path));
                     }
 
-                    if !Module32NextW(snapshot, &mut entry).as_bool() {
+                    if Module32NextW(snapshot, &mut entry).is_err() {
                         break;
                     }
                 }

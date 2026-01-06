@@ -31,10 +31,10 @@ pub fn detect_address_len(version: &str) -> usize {
     4
 }
 
-pub fn get_version_offset(
+pub fn get_version_offset<'a>(
     version: &str,
-    wx_offs: &HashMap<String, Vec<u32>>,
-) -> Option<&Vec<u32>> {
+    wx_offs: &'a HashMap<String, Vec<u32>>,
+) -> Option<&'a Vec<u32>> {
     wx_offs.get(version)
 }
 

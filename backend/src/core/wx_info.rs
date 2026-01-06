@@ -128,13 +128,13 @@ pub fn get_info_details(pid: u32, wx_offs: &HashMap<String, Vec<u32>>) -> Result
                 info.nickname = read_info_name(&memory, wechat_base_address + name_bias, addr_len)?;
             }
             if account_bias > 0 {
-                info.account = memory.read_string(wechat_base_address + account_bias, 32)?;
+                info.account = Some(memory.read_string(wechat_base_address + account_bias, 32)?);
             }
             if mobile_bias > 0 {
-                info.mobile = memory.read_string(wechat_base_address + mobile_bias, 64)?;
+                info.mobile = Some(memory.read_string(wechat_base_address + mobile_bias, 64)?);
             }
             if mail_bias > 0 {
-                info.mail = memory.read_string(wechat_base_address + mail_bias, 64)?;
+                info.mail = Some(memory.read_string(wechat_base_address + mail_bias, 64)?);
             }
             if key_bias > 0 {
                 info.key = read_key_by_offs(&memory, wechat_base_address + key_bias, addr_len)?;
@@ -161,14 +161,14 @@ fn read_info_name(
     // 先读取指针
     if let Ok(ptr) = memory.read_pointer(address, addr_len) {
         if ptr > 0 {
-            if let Ok(Some(name)) = memory.read_string(ptr, 64) {
+            if let Ok(name) = memory.read_string(ptr, 64) {
                 return Ok(Some(name));
             }
         }
     }
 
     // 如果指针读取失败，直接读取字符串
-    memory.read_string(address, 64)
+    memory.read_string(address, 64).map(Some)
 }
 
 fn read_key_by_offs(
@@ -184,7 +184,7 @@ fn read_key_by_offs(
 
     // 读取32字节的key
     let key_bytes = memory.read_memory(key_ptr, 32)?;
-    Some(hex::encode(key_bytes)).ok_or_else(|| anyhow::anyhow!("Failed to encode key").into())
+    Some(hex::encode(key_bytes)).ok_or_else(|| anyhow::anyhow!("Failed to encode key").into()).map(Some)
 }
 
 fn get_wxid(memory: &MemoryManager) -> Result<Option<String>> {
@@ -198,7 +198,7 @@ fn get_wxid(memory: &MemoryManager) -> Result<Option<String>> {
 
     // 从找到的地址提取wxid
     for addr in results {
-        if let Ok(Some(path)) = memory.read_string(addr.saturating_sub(100), 200) {
+        if let Ok(path) = memory.read_string(addr.saturating_sub(100), 200) {
             if let Some(wxid) = extract_wxid_from_path(&path) {
                 return Ok(Some(wxid));
             }

@@ -12,10 +12,5 @@ pub fn router() -> Router {
         .route("/api/media/images", post(get_image_list))
         .route("/api/media/videos", post(get_video_list))
         .route("/api/media/files", post(get_file_list))
-        .route("/api/media/img/:msg_id", post(get_image_file))
-        .route("/api/media/video/:msg_id", post(get_video_file))
-        .route("/api/media/audio/:msg_id", post(get_audio_file))
-        .route("/api/media/file/:msg_id", post(get_file_content))
-        .route("/api/media/list/:wxid", post(get_contact_media_list))
 }
 

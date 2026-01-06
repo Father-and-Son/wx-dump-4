@@ -45,14 +45,14 @@ impl FavoriteHandler {
 
         let mut params: Vec<&dyn rusqlite::ToSql> = Vec::new();
 
-        if let Some(start) = start_time {
+        if let Some(start) = start_time.as_ref() {
             sql.push_str(" AND CreateTime >= ?");
-            params.push(&start);
+            params.push(start);
         }
 
-        if let Some(end) = end_time {
+        if let Some(end) = end_time.as_ref() {
             sql.push_str(" AND CreateTime <= ?");
-            params.push(&end);
+            params.push(end);
         }
 
         sql.push_str(" ORDER BY CreateTime DESC LIMIT ? OFFSET ?");

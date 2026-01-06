@@ -121,10 +121,10 @@ pub async fn get_wordcloud(
     // 获取文本消息内容
     let messages = handler.get_msg_list(
         Some(&wxid),
+        0,
+        10000,
         req.start_time,
         req.end_time,
-        None,
-        None,
     )?;
 
     // 提取文本并统计词频
@@ -132,14 +132,13 @@ pub async fn get_wordcloud(
     
     for msg in messages {
         // 只处理文本消息（msg_type = 1）
-        if msg.msg_type == Some(1) {
-            if let Some(ref content) = msg.content {
-                // 简单的分词：按中文字符、英文单词分割
-                let words = extract_words(content);
-                for word in words {
-                    if word.len() > 1 { // 过滤单字符
-                        *word_count.entry(word).or_insert(0) += 1;
-                    }
+        if msg.msg_type == 1 {
+            let content = &msg.content;
+            // 简单的分词：按中文字符、英文单词分割
+            let words = extract_words(content);
+            for word in words {
+                if word.len() > 1 { // 过滤单字符
+                    *word_count.entry(word).or_insert(0) += 1;
                 }
             }
         }

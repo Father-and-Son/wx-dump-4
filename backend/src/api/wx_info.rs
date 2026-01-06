@@ -16,7 +16,7 @@ pub fn router(wx_offs: HashMap<String, Vec<u32>>) -> Router {
             "/api/wx/info",
             post({
                 let wx_offs = wx_offs.clone();
-                move |_| get_wx_info_handler(wx_offs)
+                move |_: ()| get_wx_info_handler(wx_offs)
             }),
         )
         .route(

@@ -75,6 +75,38 @@ impl MsgHandler {
     ) -> Result<Vec<Message>> {
         self.list.get_msg_list(wxid, start_index, page_size, start_time, end_time)
     }
+
+    /// 搜索消息
+    pub fn search_messages(
+        &self,
+        wxid: Option<&str>,
+        keyword: &str,
+        start_time: Option<i64>,
+        end_time: Option<i64>,
+        limit: i64,
+    ) -> Result<Vec<Message>> {
+        self.list.search_messages(wxid, keyword, start_time, end_time, limit)
+    }
+
+    /// 获取日期聊天统计
+    pub fn get_date_count(
+        &self,
+        wxid: Option<&str>,
+        start_time: Option<i64>,
+        end_time: Option<i64>,
+    ) -> Result<HashMap<String, serde_json::Value>> {
+        self.query.get_date_count(wxid, start_time, end_time)
+    }
+
+    /// 获取聊天最多的联系人
+    pub fn get_top_talkers(
+        &self,
+        top: i64,
+        start_time: Option<i64>,
+        end_time: Option<i64>,
+    ) -> Result<HashMap<String, serde_json::Value>> {
+        self.query.get_top_talkers(top, start_time, end_time)
+    }
 }
 
 #[cfg(test)]

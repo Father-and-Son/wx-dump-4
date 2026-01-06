@@ -50,7 +50,7 @@ impl ProcessManager {
         let mut pids = Vec::new();
 
         unsafe {
-            if Process32First(snapshot, &mut pe32).as_bool() {
+            if Process32First(snapshot, &mut pe32).is_ok() {
                 loop {
                     let exe_name = CStr::from_ptr(pe32.szExeFile.as_ptr() as *const i8);
                     let exe_name_str = exe_name.to_string_lossy();
@@ -59,12 +59,12 @@ impl ProcessManager {
                         pids.push(pe32.th32ProcessID);
                     }
 
-                    if !Process32Next(snapshot, &mut pe32).as_bool() {
+                    if Process32Next(snapshot, &mut pe32).is_err() {
                         break;
                     }
                 }
             }
-            CloseHandle(snapshot)?;
+            let _ = CloseHandle(snapshot);
         }
 
         Ok(pids)

@@ -45,6 +45,7 @@ impl ContactHandler {
                 alias: row.get(3)?,
                 head_img_url: row.get(4)?,
                 contact_type: row.get(5)?,
+                account: row.get(3).ok(), // Use alias as account if present
             })
         })?;
 
@@ -69,6 +70,7 @@ impl ContactHandler {
                 alias: row.get(3)?,
                 head_img_url: row.get(4)?,
                 contact_type: row.get(5)?,
+                account: row.get(3).ok(),
             })
         })?;
 
@@ -95,6 +97,7 @@ impl ContactHandler {
                 alias: row.get(3)?,
                 head_img_url: row.get(4)?,
                 contact_type: row.get(5)?,
+                account: row.get(3).ok(),
             })
         })?;
 

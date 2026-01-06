@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::db::msg::MsgHandler;
 use crate::db::contact::ContactHandler;
-use crate::utils::{AppError, Result};
+use crate::utils::{AppError, Result, validation};
 use super::models::*;
 
 pub async fn get_contacts(Json(req): Json<ChatContactsRequest>) -> Result<Json<ChatContactsResponse>> {

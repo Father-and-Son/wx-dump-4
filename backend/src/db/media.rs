@@ -66,16 +66,16 @@ impl MediaHandler {
 
         // 如果有MsgSvrId关联，可以通过MSG表关联查询
         // 这里简化处理，直接查询Media表
-        if let Some(mtype) = media_type {
+        if let Some(mtype) = media_type.as_ref() {
             sql.push_str(" AND Reserved1 = ?");
-            params.push(&mtype);
+            params.push(mtype);
         }
 
         sql.push_str(" ORDER BY Reserved2 DESC");
 
-        if let Some(limit_val) = limit {
+        if let Some(limit_val) = limit.as_ref() {
             sql.push_str(" LIMIT ?");
-            params.push(&limit_val);
+            params.push(limit_val);
         }
 
         let results = self.db.execute_query(&sql, &params, |row| {
