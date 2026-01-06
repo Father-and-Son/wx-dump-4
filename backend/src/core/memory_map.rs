@@ -56,17 +56,26 @@ impl MemoryMap {
         Ok(modules)
     }
 
-    /// 查找WeChatWin.dll模块
+    /// 查找主要逻辑模块（WeChatWin.dll 或 Weixin.dll）
     pub fn find_wechatwin_dll(pid: u32) -> Result<Option<ModuleInfo>> {
         let modules = Self::get_modules(pid)?;
 
-        for module in modules {
+        // 1. 优先查找 WeChatWin.dll (3.x 版本)
+        for module in &modules {
             if module.file_name.to_lowercase().contains("wechatwin.dll") {
-                return Ok(Some(module));
+                return Ok(Some(module.clone()));
             }
         }
 
-        Ok(None)
+        // 2. 查找 Weixin.dll (4.x 版本)
+        for module in &modules {
+            if module.file_name.to_lowercase() == "weixin.dll" {
+                return Ok(Some(module.clone()));
+            }
+        }
+
+        // 3. 兜底返回主模块 (兼容 4.0+，如果逻辑在 EXE 中)
+        Ok(modules.first().cloned())
     }
 
     /// 获取WeChatWin.dll的基址
@@ -74,7 +83,7 @@ impl MemoryMap {
         if let Some(module) = Self::find_wechatwin_dll(pid)? {
             Ok(module.base_address)
         } else {
-            Err(anyhow::anyhow!("WeChatWin.dll not found").into())
+            Err(anyhow::anyhow!("Failed to find main module for PID {}", pid).into())
         }
     }
 
@@ -90,12 +99,18 @@ impl MemoryMap {
             ..Default::default()
         };
 
+        let mut main_exe_path = None;
+
         unsafe {
             if Module32FirstW(snapshot, &mut entry).is_ok() {
+                // 第一个模块通常是主执行文件
+                main_exe_path = Some(Self::wide_string_to_string(&entry.szExePath)?);
+
                 loop {
                     let file_name = Self::wide_string_to_string(&entry.szModule)?;
+                    let file_name_lower = file_name.to_lowercase();
                     
-                    if file_name.to_lowercase().contains("wechatwin.dll") {
+                    if file_name_lower.contains("wechatwin.dll") || file_name_lower == "weixin.dll" {
                         let file_path = Self::wide_string_to_string(&entry.szExePath)?;
                         return Ok(Some(file_path));
                     }
@@ -107,7 +122,7 @@ impl MemoryMap {
             }
         }
 
-        Ok(None)
+        Ok(main_exe_path)
     }
 
     fn wide_string_to_string(wide: &[u16]) -> Result<String> {

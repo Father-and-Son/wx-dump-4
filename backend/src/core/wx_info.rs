@@ -190,19 +190,31 @@ fn read_key_by_offs(
 }
 
 fn get_wxid(memory: &MemoryManager) -> Result<Option<String>> {
-    // 搜索内存中的wxid模式
+    // 获取内存映射，只在已提交的内存中搜索
+    let maps = memory.get_memory_maps()?;
     let pattern = b"\\Msg\\FTSContact";
-    let results = memory.search_memory(pattern, 0, 0x7FFFFFFFFFFFFFFF, 100)?;
-
-    if results.is_empty() {
-        return Ok(None);
-    }
-
-    // 从找到的地址提取wxid
-    for addr in results {
-        if let Ok(path) = memory.read_string(addr.saturating_sub(100), 200) {
-            if let Some(wxid) = extract_wxid_from_path(&path) {
-                return Ok(Some(wxid));
+    
+    for map in maps {
+        // 只搜索可读的已提交内存
+        if map.state == windows::Win32::System::Memory::MEM_COMMIT.0 && 
+           (map.protect & windows::Win32::System::Memory::PAGE_READONLY.0 != 0 ||
+            map.protect & windows::Win32::System::Memory::PAGE_READWRITE.0 != 0 ||
+            map.protect & windows::Win32::System::Memory::PAGE_EXECUTE_READ.0 != 0 ||
+            map.protect & windows::Win32::System::Memory::PAGE_EXECUTE_READWRITE.0 != 0) {
+            
+            if let Ok(results) = memory.search_memory(
+                pattern, 
+                map.base_address, 
+                map.base_address + map.region_size, 
+                10
+            ) {
+                for addr in results {
+                    if let Ok(path) = memory.read_string(addr.saturating_sub(100), 200) {
+                        if let Some(wxid) = extract_wxid_from_path(&path) {
+                            return Ok(Some(wxid));
+                        }
+                    }
+                }
             }
         }
     }
@@ -226,15 +238,23 @@ fn extract_wxid_from_path(path: &str) -> Option<String> {
 fn get_wechat_base_address(memory: &MemoryManager) -> Result<usize> {
     let maps = memory.get_memory_maps()?;
     
-    for map in maps {
+    // 1. 优先查找 WeChatWin.dll
+    for map in &maps {
         if let Some(ref file_name) = map.file_name {
-            if file_name.contains("WeChatWin.dll") {
+            if file_name.contains("WeChatWin.dll") || file_name.contains("Weixin.dll") {
                 return Ok(map.base_address);
             }
         }
     }
 
-    Err(anyhow::anyhow!("WeChatWin.dll not found").into())
+    // 2. 兜底：返回第一个有名字的模块（通常是 .exe）
+    for map in &maps {
+        if map.file_name.is_some() {
+            return Ok(map.base_address);
+        }
+    }
+
+    Err(anyhow::anyhow!("Main module base address not found").into())
 }
 
 fn get_wechat_version(pid: u32) -> Result<String> {
@@ -254,8 +274,19 @@ fn get_wx_dir_by_reg(wxid: &str) -> Option<String> {
     // 从注册表读取微信文件路径
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     
-    // 尝试从注册表读取
+    // 1. 尝试从 WeChat 注册表读取
     if let Ok(key) = hkcu.open_subkey(r"Software\Tencent\WeChat") {
+        if let Ok(path) = key.get_value::<String, _>("FileSavePath") {
+            let wx_dir = PathBuf::from(path).join("WeChat Files");
+            let wxid_dir = wx_dir.join(wxid);
+            if wxid_dir.exists() {
+                return wxid_dir.to_str().map(|s| s.to_string());
+            }
+        }
+    }
+
+    // 2. 尝试从 Weixin 注册表读取 (4.0+)
+    if let Ok(key) = hkcu.open_subkey(r"Software\Tencent\Weixin") {
         if let Ok(path) = key.get_value::<String, _>("FileSavePath") {
             let wx_dir = PathBuf::from(path).join("WeChat Files");
             let wxid_dir = wx_dir.join(wxid);

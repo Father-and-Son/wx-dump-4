@@ -12,13 +12,16 @@ impl VersionOffsetDetector {
         let process = ProcessManager::open(pid)?;
         let memory = MemoryManager::new(process.handle);
 
-        // 获取WeChatWin.dll基址
-        let wechat_base_address = match MemoryMap::get_wechatwin_base_address(pid) {
-            Ok(addr) => addr,
-            Err(_) => {
-                return Err(anyhow::anyhow!("Failed to get WeChatWin.dll base address").into());
+        // 获取主要逻辑模块信息
+        let module = match MemoryMap::find_wechatwin_dll(pid)? {
+            Some(m) => m,
+            None => {
+                return Err(anyhow::anyhow!("Main module not found").into());
             }
         };
+
+        let wechat_base_address = module.base_address;
+        let module_size = module.size;
 
         let addr_len = if version.starts_with("4.") || version.starts_with("5.") {
             8 // 64位
@@ -27,11 +30,11 @@ impl VersionOffsetDetector {
         };
 
         // 尝试检测各个偏移量
-        let name_bias = Self::detect_name_offset(&memory, wechat_base_address, addr_len)?;
-        let account_bias = Self::detect_account_offset(&memory, wechat_base_address, addr_len)?;
-        let mobile_bias = Self::detect_mobile_offset(&memory, wechat_base_address, addr_len)?;
-        let mail_bias = Self::detect_mail_offset(&memory, wechat_base_address, addr_len)?;
-        let key_bias = Self::detect_key_offset(&memory, wechat_base_address, addr_len)?;
+        let name_bias = Self::detect_name_offset(&memory, wechat_base_address, module_size, addr_len)?;
+        let account_bias = Self::detect_account_offset(&memory, wechat_base_address, module_size, addr_len)?;
+        let mobile_bias = Self::detect_mobile_offset(&memory, wechat_base_address, module_size, addr_len)?;
+        let mail_bias = Self::detect_mail_offset(&memory, wechat_base_address, module_size, addr_len)?;
+        let key_bias = Self::detect_key_offset(&memory, wechat_base_address, module_size, addr_len)?;
 
         Ok(vec![name_bias, account_bias, mobile_bias, mail_bias, key_bias])
     }
@@ -41,12 +44,13 @@ impl VersionOffsetDetector {
     fn detect_name_offset(
         memory: &MemoryManager,
         base_address: usize,
+        module_size: usize,
         _addr_len: usize,
     ) -> Result<u32> {
         // 搜索特征码（这里需要根据实际情况调整）
         // 通常昵称在某个固定的相对位置
         let search_pattern = b"nickname";
-        let results = memory.search_memory(search_pattern, base_address, base_address + 0x10000000, 10)?;
+        let results = memory.search_memory(search_pattern, base_address, base_address + module_size, 10)?;
 
         if let Some(&address) = results.first() {
             // 计算相对偏移
@@ -62,11 +66,12 @@ impl VersionOffsetDetector {
     fn detect_account_offset(
         memory: &MemoryManager,
         base_address: usize,
+        module_size: usize,
         _addr_len: usize,
     ) -> Result<u32> {
         // 类似昵称的检测方法
         let search_pattern = b"account";
-        let results = memory.search_memory(search_pattern, base_address, base_address + 0x10000000, 10)?;
+        let results = memory.search_memory(search_pattern, base_address, base_address + module_size, 10)?;
 
         if let Some(&address) = results.first() {
             let offset = address as u32 - base_address as u32;
@@ -80,6 +85,7 @@ impl VersionOffsetDetector {
     fn detect_mobile_offset(
         _memory: &MemoryManager,
         _base_address: usize,
+        _module_size: usize,
         _addr_len: usize,
     ) -> Result<u32> {
         // 搜索手机号特征（通常是11位数字）
@@ -91,6 +97,7 @@ impl VersionOffsetDetector {
     fn detect_mail_offset(
         _memory: &MemoryManager,
         _base_address: usize,
+        _module_size: usize,
         _addr_len: usize,
     ) -> Result<u32> {
         // 搜索邮箱特征（包含@符号）
@@ -101,6 +108,7 @@ impl VersionOffsetDetector {
     fn detect_key_offset(
         _memory: &MemoryManager,
         _base_address: usize,
+        _module_size: usize,
         _addr_len: usize,
     ) -> Result<u32> {
         // 密钥通常是64位十六进制字符串
