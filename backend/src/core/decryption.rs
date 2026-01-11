@@ -61,7 +61,7 @@ pub fn decrypt_db(key: &str, db_path: &Path, out_path: &Path) -> Result<()> {
         Err(e) => {
             let msg = format!(
                 "解密失败。已尝试 V4 和 V3 参数。可能原因：\n\
-                1. 密钥错误 (最可能)。请重新获取密钥。\n\
+                1. 密钥错误 (最可能)。请运行 'python extract_key.py' 获取正确密钥。\n\
                 2. 数据库文件已损坏或被占用。\n\
                 3. 此版本的微信使用了非标准的加密参数。\n\
                 \n\
