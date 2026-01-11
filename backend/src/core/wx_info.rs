@@ -5,6 +5,7 @@ use crate::core::{
     process::ProcessManager,
     version,
     version_detection::VersionOffsetDetector,
+    wx_key_hook,
 };
 use crate::utils::Result;
 use serde::{Deserialize, Serialize};
@@ -152,7 +153,47 @@ pub fn get_info_details(pid: u32, wx_offs: &HashMap<String, Vec<u32>>) -> Result
         info.wx_dir = get_wx_dir_by_reg(wxid);
     }
 
+    // ⚠️ 安全警告：Hook 方式已禁用
+    // keykey.dll 的 Hook 方式会向微信注入 Shellcode，可能触发微信的安全检测导致：
+    // 1. 账号强制下线
+    // 2. 账号被标记风险
+    // 3. 严重情况可能封号
+    // 
+    // 推荐替代方案：
+    // 1. 使用 wx_key.exe 独立获取一次密钥
+    // 2. 通过 API 手动设置密钥
+    // 3. 使用离线数据库解密方式
+    if info.key.is_none() && is_version_4x(&version) {
+        tracing::warn!(
+            "版本 {} 需要手动配置密钥。请通过 POST /api/wx/key/set 接口设置，或使用 wx_key.exe 独立工具获取后配置。",
+            version
+        );
+        tracing::warn!("⚠️ 注意：自动 Hook 功能已禁用，因为它可能触发微信安全检测导致封号风险！");
+    }
+
     Ok(info)
+}
+
+/// 判断是否为 4.x 版本
+fn is_version_4x(version: &str) -> bool {
+    version.starts_with("4.") || version.starts_with("5.")
+}
+
+/// 使用 Hook 方式获取密钥
+/// ⚠️ 警告：此功能可能触发微信安全检测！仅供调试使用，生产环境请禁用
+#[allow(dead_code)]
+fn get_key_by_hook_method(pid: u32) -> Result<String> {
+    use std::time::Duration;
+    
+    // 检查 keykey.dll 是否可用
+    if !wx_key_hook::is_wx_key_available() {
+        return Err(anyhow::anyhow!(
+            "keykey.dll 不可用。请从 https://github.com/ycccccccy/wx_key/releases 下载并放置到 backend/dll/ 目录"
+        ).into());
+    }
+    
+    // 使用 Hook 方式获取密钥，超时 30 秒
+    wx_key_hook::get_key_by_hook(pid, Duration::from_secs(30))
 }
 
 fn read_info_name(

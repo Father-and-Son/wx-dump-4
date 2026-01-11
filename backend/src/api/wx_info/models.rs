@@ -13,3 +13,17 @@ pub struct WxInfoResponse {
     pub wx_dir: Option<String>,
 }
 
+/// Hook 状态响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HookStatusResponse {
+    pub available: bool,
+    pub message: String,
+}
+
+/// Hook 获取密钥响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HookKeyResponse {
+    pub success: bool,
+    pub key: Option<String>,
+    pub message: String,
+}

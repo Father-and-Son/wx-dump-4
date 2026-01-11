@@ -36,6 +36,7 @@ rusqlite = { version = "0.30", features = ["bundled", "backup", "blob"] }
 aes = "0.8"
 cbc = "0.1"
 sha1 = "0.10"
+sha2 = "0.10"
 pbkdf2 = "0.12"
 hmac = "0.12"
 hex = "0.4"
@@ -47,6 +48,8 @@ regex = "1.10"
 winreg = "0.52"
 chrono = { version = "0.4", features = ["serde"] }
 lz4_flex = "0.11"
+sysinfo = "0.30"
+rayon = "1.8"
 
 # 日志
 tracing = "0.1"
@@ -63,6 +66,9 @@ utoipa-swagger-ui = { version = "6.0", features = ["axum"] }
 # Protobuf解析
 prost = "0.12"
 prost-types = "0.12"
+
+# 动态库加载（用于 keykey.dll）
+libloading = "0.8"
 
 # 测试框架
 [dev-dependencies]
