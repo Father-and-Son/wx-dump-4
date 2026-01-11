@@ -180,8 +180,8 @@ cargo run
 
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm i
+pnpm run dev
 ```
 
 前端服务运行在 `http://localhost:5173`
