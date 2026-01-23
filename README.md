@@ -212,6 +212,12 @@ pnpm run dev
 - [x] 响应式设计优化（移动端适配，基础支持已完成）✅
 - [x] 暗色主题支持 ✅
 
+## 获取key方法
+
+<div align="center">
+  <img src="image.png" alt="获取key方法" width="800">
+</div>
+
 ## 注意事项
 
 1. **权限要求**：需要管理员权限运行（用于读取进程内存）
