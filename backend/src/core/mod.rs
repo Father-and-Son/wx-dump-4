@@ -7,6 +7,7 @@ pub mod version_detection;
 pub mod wx_info;
 pub mod file_version;
 pub mod wx_key_hook;
+pub mod key_finder;
 
 #[allow(unused_imports)]
 pub use decryption::decrypt_db;

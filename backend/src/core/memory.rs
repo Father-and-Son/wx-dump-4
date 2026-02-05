@@ -180,11 +180,8 @@ impl MemoryManager {
 #[derive(Debug, Clone)]
 pub struct MemoryMap {
     pub base_address: usize,
-    #[allow(dead_code)]
     pub region_size: usize,
-    #[allow(dead_code)]
     pub state: u32,
-    #[allow(dead_code)]
     pub protect: u32,
     pub file_name: Option<String>,
 }

@@ -1,6 +1,8 @@
 use crate::core::{memory::MemoryManager, memory_map::MemoryMap, process::ProcessManager};
+use crate::core::key_finder::{KeyFinder, KeyCandidate};
 use crate::utils::Result;
 use std::collections::HashMap;
+use std::path::Path;
 
 /// 版本偏移量自动检测
 pub struct VersionOffsetDetector;
@@ -37,6 +39,69 @@ impl VersionOffsetDetector {
         let key_bias = Self::detect_key_offset(&memory, wechat_base_address, module_size, addr_len)?;
 
         Ok(vec![name_bias, account_bias, mobile_bias, mail_bias, key_bias])
+    }
+
+    /// 直接搜索密钥（不依赖偏移量）
+    /// 这是微信 4.x 版本推荐的获取密钥方式
+    pub fn find_key_directly(pid: u32, version: &str) -> Result<Option<String>> {
+        tracing::info!("使用直接内存搜索方式查找密钥 (PID: {}, 版本: {})", pid, version);
+        
+        let finder = KeyFinder::new(pid, version);
+        let candidates = finder.find_keys()?;
+        
+        if candidates.is_empty() {
+            tracing::warn!("未找到任何候选密钥");
+            return Ok(None);
+        }
+        
+        // 返回置信度最高的密钥
+        let best = &candidates[0];
+        tracing::info!(
+            "最佳候选密钥: {} (地址: 0x{:x}, 置信度: {}, 方法: {})",
+            best.key_hex,
+            best.address,
+            best.confidence,
+            best.method
+        );
+        
+        Ok(Some(best.key_hex.clone()))
+    }
+    
+    /// 直接搜索并验证密钥
+    /// 使用实际数据库文件验证候选密钥
+    pub fn find_and_verify_key(pid: u32, version: &str, db_path: &Path) -> Result<Option<String>> {
+        tracing::info!("使用内存搜索查找密钥并验证 (数据库: {:?})", db_path);
+        
+        let finder = KeyFinder::new(pid, version);
+        let candidates = finder.find_keys()?;
+        
+        if candidates.is_empty() {
+            return Ok(None);
+        }
+        
+        // 按置信度顺序尝试验证
+        for candidate in candidates {
+            tracing::info!(
+                "尝试验证密钥: {} (置信度: {}, 方法: {})",
+                candidate.key_hex,
+                candidate.confidence,
+                candidate.method
+            );
+            
+            if finder.verify_key_with_database(&candidate.key_hex, db_path)? {
+                tracing::info!("密钥验证成功！");
+                return Ok(Some(candidate.key_hex));
+            }
+        }
+        
+        tracing::warn!("所有候选密钥验证失败");
+        Ok(None)
+    }
+    
+    /// 获取所有候选密钥（供用户选择）
+    pub fn get_key_candidates(pid: u32, version: &str) -> Result<Vec<KeyCandidate>> {
+        let finder = KeyFinder::new(pid, version);
+        finder.find_keys()
     }
 
     /// 检测昵称偏移量
@@ -105,15 +170,16 @@ impl VersionOffsetDetector {
     }
 
     /// 检测密钥偏移量
+    /// 对于微信 4.x，推荐使用 find_key_directly 直接搜索密钥
     fn detect_key_offset(
         _memory: &MemoryManager,
         _base_address: usize,
         _module_size: usize,
         _addr_len: usize,
     ) -> Result<u32> {
-        // 密钥通常是64位十六进制字符串
-        // 搜索特征码来定位
-        Ok(0) // 暂时返回0，需要更精确的检测方法
+        // 密钥偏移量检测已被新的直接搜索方法取代
+        // 对于 4.x 版本，请使用 find_key_directly 方法
+        Ok(0)
     }
 
     /// 验证检测到的偏移量是否有效

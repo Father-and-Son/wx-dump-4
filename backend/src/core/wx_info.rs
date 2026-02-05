@@ -153,22 +153,30 @@ pub fn get_info_details(pid: u32, wx_offs: &HashMap<String, Vec<u32>>) -> Result
         info.wx_dir = get_wx_dir_by_reg(wxid);
     }
 
-    // ⚠️ 安全警告：Hook 方式已禁用
-    // keykey.dll 的 Hook 方式会向微信注入 Shellcode，可能触发微信的安全检测导致：
-    // 1. 账号强制下线
-    // 2. 账号被标记风险
-    // 3. 严重情况可能封号
-    // 
-    // 推荐替代方案：
-    // 1. 使用 wx_key.exe 独立获取一次密钥
-    // 2. 通过 API 手动设置密钥
-    // 3. 使用离线数据库解密方式
+    // 如果通过偏移量未能获取密钥，尝试使用内存搜索
     if info.key.is_none() && is_version_4x(&version) {
-        tracing::warn!(
-            "版本 {} 需要手动配置密钥。请通过 POST /api/wx/key/set 接口设置，或使用 wx_key.exe 独立工具获取后配置。",
-            version
-        );
-        tracing::warn!("⚠️ 注意：自动 Hook 功能已禁用，因为它可能触发微信安全检测导致封号风险！");
+        tracing::info!("尝试使用内存搜索方式自动查找密钥...");
+        
+        // 使用新的密钥查找器
+        match crate::core::key_finder::find_wechat_key(pid, &version) {
+            Ok(Some(key)) => {
+                tracing::info!("✓ 成功使用内存搜索找到密钥！");
+                info.key = Some(key);
+            }
+            Ok(None) => {
+                tracing::warn!(
+                    "未能自动找到密钥。版本 {} 可能需要手动配置。",
+                    version
+                );
+                tracing::info!("可选方案：");
+                tracing::info!("  1. 使用 POST /api/wx/key/search 手动触发搜索");
+                tracing::info!("  2. 使用 POST /api/wx/key/set 直接设置密钥");
+                tracing::info!("  3. 使用 wx_key.exe 工具获取密钥后配置");
+            }
+            Err(e) => {
+                tracing::warn!("密钥搜索出错: {}", e);
+            }
+        }
     }
 
     Ok(info)
